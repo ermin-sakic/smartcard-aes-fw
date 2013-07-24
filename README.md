@@ -1,8 +1,7 @@
 smartcard-aes-fw
 ================
 
-A generic SmartCard firmware allowing for communication based on ISO 7816 Part 3/Part 4 protocol standards, incorporating safe AES-128 with masking and shuffling for decryption purposes.
-
+A generic SmartCard firmware implementation allowing for communication based on ISO 7816 Part 3/Part 4 protocol standards, incorporating safe AES-128 with masking and shuffling as security measures. The solely look-up based (inverse) AES is used for decryption purposes.
 Description of the implementation:
 In order to achieve the functionality of the original card, the clone card needed to be ISO7816-3 compatible, that is, support the T=0 data transfer protocol. The base implementation revolves around continuous execution of states, and thus could be realized as a state machine, consisting of an ATR (Answer to Reset) procedure, followed by a loop receive procedure (for the command APDUs and the 16-byte key sequence), a decryption procedure (128-bit inverse AES) and, finally, the transmission of the decrypted key sequence. The ATR sequence as well as the receive and transmission procedures are described in detail further below.
 
