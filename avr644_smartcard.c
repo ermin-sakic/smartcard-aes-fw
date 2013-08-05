@@ -152,7 +152,7 @@ int main (void)
 							//man könnte theoretisch auch einfach alle Rundenschlüsssel fest speichern 
 							//=>HABS berechnet
 	ATR();
-	//test
+
 	while (1)
 	{
 		//RECEIVE APDU, RECEIVE KEY (+TRANSMIT CTS BYTES), TRANSMIT FIRST STATUS BYTE
