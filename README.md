@@ -118,7 +118,7 @@ The C-Code for shuffling Sub-Bytes and Shift-Rows Operations:
           inv_subBytes_masked_rand(state,hiding_sequence);
       }
 
-### Reference standard: 
+### Standard and references: 
 http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-3.aspx [Electronic Signals and Transmission Protocols]  
 http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-4.aspx [Interindustry Commands for Interchange]  
 http://books.google.com/books/about/Power_Analysis_Attacks.html?id=YXkASFjeUswC [Power Analysis Attacks: Revealing the Secrets of Smart Cards (Google eBook)]
