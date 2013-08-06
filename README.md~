@@ -1,4 +1,4 @@
-SmartCard Firmware Implementation with AES-128 decryption support
+smartcard-aes-fw
 ================
 ### Introduction:
 A generic SmartCard firmware implementation allowing for communication based on ISO 7816 Part 3/Part 4 protocol standards, incorporating safe AES-128 with masking and shuffling as security measures. The solely look-up based (inverse) AES is used for decryption purposes.
