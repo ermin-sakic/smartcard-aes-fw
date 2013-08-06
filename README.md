@@ -1,9 +1,5 @@
 smartcard-aes-fw
 ================
-### Reference standard: 
-http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-3.aspx [Electronic Signals and Transmission Protocols]
-http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-4.aspx [Interindustry Commands for Interchange]
-
 ### Introduction:
 A generic SmartCard firmware implementation allowing for communication based on ISO 7816 Part 3/Part 4 protocol standards, incorporating safe AES-128 with masking and shuffling as security measures. The solely look-up based (inverse) AES is used for decryption purposes.
 
@@ -119,4 +115,7 @@ The C-Code for shuffling Sub-Bytes and Shift-Rows Operations:
           inv_shiftRows(state);
           inv_subBytes_masked_rand(state,hiding_sequence);
       }
-The shuffling implementation can easily be combined with the masking implementation. The two methods combined are the final secure implementation of our Smartcard Group. The Code is to be found on the SVN Server.
+
+### Reference standard: 
+http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-3.aspx [Electronic Signals and Transmission Protocols]
+http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-4.aspx [Interindustry Commands for Interchange]
