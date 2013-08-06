@@ -27,22 +27,21 @@ In order to achieve the functionality of the bit duration of 372 clock cycles, t
 <a href="http://imgur.com/4sG8efI"><img src="http://i.imgur.com/4sG8efI.png"/></a>
 
 The described control flow looks as follows, the transmit (write on PDI_DATA) functionality is analog to the receive function's control flow:
-      
-      
-    receiveLock = 1;      
-    for( int i = 0; i < 8; i++ )
-    {
-      while(receiveLock);
+```C   
+receiveLock = 1;      
+for( int i = 0; i < 8; i++ )
+{
+	while(receiveLock);
     	receivedByte |= (receivedBit << i);
-	    if(receivedBit == 1)
-	        parityCounter++;
-	    receiveLock = 1;
-    }
-    
+	if(receivedBit == 1);
+		parityCounter++;
+	receiveLock = 1;
+}
+```    
 ... and the corresponding Timer ISR:  
-
-     ISR(TIMER2_COMPA_vect)
-     {
+```C
+ISR(TIMER2_COMPA_vect)
+{
 	cli();
 	if( ( PINB & ( 1 << PDI_DATA ) ) == 0 )
 		receivedBit = 0;
@@ -51,35 +50,33 @@ The described control flow looks as follows, the transmit (write on PDI_DATA) fu
 		
 	receiveLock = 0;
 	sei();
-     }
-
+}
+```
 On the other hand, when receiving a payload, the start bit (LOW) on the PDI_DATA ping has to be distinguished from the idle high state the pin is normally exposed to. For this purpose, the pin change interrupt was used, and an ISR executed whenever the pin value PDI_DATA changed from idle mode:
-       
-        
-       ISR(PCINT1_vect)
-       {
-	    cli();						//turn off interrupts
-	    if( ( PINB & (1 << PDI_DATA) ) == 0 )		//if LOW was observed
+```C    
+ISR(PCINT1_vect)
+{
+	cli();						//turn off interrupts
+	if( ( PINB & (1 << PDI_DATA) ) == 0 )		//if LOW was observed
 		startBitFlag = 1;				//set start bit flag to 1
-	    sei();						//turn interrupts on
-       } 
-       
+	sei();						//turn interrupts on
+} 
+```       
        
 This ISR sets the start bit flag to 1 and allows for distinguishing the incoming sequence of bits which are to be received and saved into the byte variable receivedByte.
-       
-         
-       uint8_t receiveByte()
-       {
-	  uint8_t receivedByte = 0x00;    	//the byte to be filled
-	  startBitFlag = 0;			//startBit has still not arrived
+```C
+uint8_t receiveByte()
+{
+	uint8_t receivedByte = 0x00;    	//the byte to be filled
+	startBitFlag = 0;			//startBit has still not arrived
 	
-	  PCICR |= (1 << PCIE1);			//turn on the Pin Change Interrupt for PCINT15:8 - PORTB
-	  PCMSK1 |= (1 << PCINT14);		//turn on the Pin Change Interrupt only for PCINT14 (PB6)
+	PCICR |= (1 << PCIE1);			//turn on the Pin Change Interrupt for PCINT15:8 - PORTB
+	PCMSK1 |= (1 << PCINT14);		//turn on the Pin Change Interrupt only for PCINT14 (PB6)
 	
-	  while(startBitFlag != 1);		//wait until a start bit shows up
-
-	  startBitFlag = 0;			//start bit received (PCINT ISR), set flag to 0
-       }
+	while(startBitFlag != 1);		//wait until a start bit shows up
+	startBitFlag = 0;			//start bit received (PCINT ISR), set flag to 0
+}
+```
 	
 ### Masking Implementation: 
 The main idea of masking is the processing of all relevant information (the AES decryption) behind a bitmask. Therefore 6 random values are generated: m, m', m1, m2, m3, m4. But often m and m' are identical (in some papers and also in the book from Mr. Mangard). With an identical mask m and m', it is more easy to attack the masked implementation with a second order DPA. The secure implementation uses different values for m and m' but for testing/attacking simplifications, it was also implemented with same masks. For the "Mix Column" operation, 4 outputmasks m1', m2', m3', m4' have to be precalculated based on the input masks m1, m2, m3, m4. There is also a difference between the AES encryption and decryption, therefore the sequence of the applied masks had to be used in an appropriate order.
@@ -91,33 +88,40 @@ The main idea of masking is the processing of all relevant information (the AES 
 Main idea of shuffling is to lower the discoverable correlation coefficient by executing the DPA attack. In the shuffling implementation, the S-Box lookups are processed in an arbitrary order. This already reduces the correlation coefficient (if no further steps are taken in the DPA) by the factor 16. Furthermore, the oder of the operations "Shift Rows" and "S-Box Lookup" is processed in arbitrary order, because the two operations are interchangeable. This causes a reduces correlation coefficient by the faktor 2*16 = 32 (In case no windowing attack is considered).
 
 The C-Code for the random sequence generation:
+```C  
+uint8_t indi[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};		
+for (int i = 15; i >= 0 ;i--)
+{
+	int val = rand() % (i+1);
+        hiding_sequence[i] = indi[val]; 
+        for( int j = val; j < i ; j++)
+        { //shifting all remaining values left:
+        	indi[j] = indi[j+1];			
+        }
+}
+```
 
-      uint8_t indi[16] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15};		
-      for (int i = 15; i >= 0 ;i--){
-          int val = rand() % (i+1);
-          hiding_sequence[i] = indi[val]; 
-          for( int j = val; j < i ; j++){ //shifting all remaining values left:
-              indi[j] = indi[j+1];			
-          }
-      }
 The C-Code for the random S-box Lookups:
+```C  
+for (uint8_t i = 0; i < 16; i++)
+{
+	state[hiding_sequence[i]] = InvSbox_masked[state[hiding_sequence[i]]];
+}
+```
 
-      for (uint8_t i = 0; i < 16; i++){
-          state[hiding_sequence[i]] = InvSbox_masked[state[hiding_sequence[i]]];
-      }
 The C-Code for shuffling Sub-Bytes and Shift-Rows Operations:
-
-      if(rand()%2 == 1)
-      {
-          inv_subBytes_masked_rand(state,hiding_sequence);
-          inv_shiftRows(state);
-      }
-      else
-      {
-          inv_shiftRows(state);
-          inv_subBytes_masked_rand(state,hiding_sequence);
-      }
-
+```C
+if(rand()%2 == 1)
+{
+	inv_subBytes_masked_rand(state,hiding_sequence);
+        inv_shiftRows(state);
+}
+else
+{
+	inv_shiftRows(state);
+        inv_subBytes_masked_rand(state,hiding_sequence);
+}
+```
 ### Standard and references: 
 http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-3.aspx [Electronic Signals and Transmission Protocols]  
 http://www.cardwerk.com/smartcards/smartcard_standard_ISO7816-4.aspx [Interindustry Commands for Interchange]  
