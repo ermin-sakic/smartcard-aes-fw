@@ -82,13 +82,13 @@ This ISR sets the start bit flag to 1 and allows for distinguishing the incoming
        }
 	
 ### Masking Implementation: 
-The main idea of masking is, to process all relevant information (the AES decryption) behind a bitmask. Therefore 6 random values are generated: m, m', m1, m2, m3, m4. But often m and m' are identical (in some papers and also in the book from Mr. Mangard). With an identical mask m and m', it is more easy to attack the masked implementation with a second order DPA. The secure implementation uses different values for m and m' but for testing/attacking simplifications, it was also implemented with same masks. For the "Mix Column" operation, 4 outputmasks m1', m2', m3', m4' have to be precalculated based on the input masks m1, m2, m3, m4. There is also a difference between the AES encryption and decryption, therefore the sequence of the applied masks had to be used in an appropriate order.
+The main idea of masking is the processing of all relevant information (the AES decryption) behind a bitmask. Therefore 6 random values are generated: m, m', m1, m2, m3, m4. But often m and m' are identical (in some papers and also in the book from Mr. Mangard). With an identical mask m and m', it is more easy to attack the masked implementation with a second order DPA. The secure implementation uses different values for m and m' but for testing/attacking simplifications, it was also implemented with same masks. For the "Mix Column" operation, 4 outputmasks m1', m2', m3', m4' have to be precalculated based on the input masks m1, m2, m3, m4. There is also a difference between the AES encryption and decryption, therefore the sequence of the applied masks had to be used in an appropriate order.
 
 <a href="http://imgur.com/PGffcAo"><img src="http://i.imgur.com/PGffcAo.png"/></a>
 
 ### Shuffling Implementation: 
 
-Main idea of shuffling is, to lower the correlation coefficient of the DPA attack. In our implementation, the Sbox lookups are processed in an arbitrary order. This already reduces the correlation coefficient (if no further steps are taken in the dpa) by the faktor 16. Furthermore, the oder of the operations "Shift Rows" and "Sbox Lookup" is processed in arbitrary order, because the two operations are interchangeable. This causes a reduces correlation coefficient by the faktor 2*16 = 32 (In case no windowing attack is considered).
+Main idea of shuffling is to lower the discoverable correlation coefficient by executing the DPA attack. In the shuffling implementation, the S-Box lookups are processed in an arbitrary order. This already reduces the correlation coefficient (if no further steps are taken in the DPA) by the factor 16. Furthermore, the oder of the operations "Shift Rows" and "S-Box Lookup" is processed in arbitrary order, because the two operations are interchangeable. This causes a reduces correlation coefficient by the faktor 2*16 = 32 (In case no windowing attack is considered).
 
 The C-Code for the random sequence generation:
 
@@ -107,11 +107,13 @@ The C-Code for the random S-box Lookups:
       }
 The C-Code for shuffling Sub-Bytes and Shift-Rows Operations:
 
-      if(rand()%2 == 1){
+      if(rand()%2 == 1)
+      {
           inv_subBytes_masked_rand(state,hiding_sequence);
           inv_shiftRows(state);
       }
-      else{
+      else
+      {
           inv_shiftRows(state);
           inv_subBytes_masked_rand(state,hiding_sequence);
       }
